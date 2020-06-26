@@ -70,7 +70,7 @@ pyzmq=19.0.1=pypi_0
 readline=8.0=h7b6447c_0
 requests=2.23.0=py38_0
 send2trash=1.5.0=pypi_0
-setuptools=47.1.1=py38_0
+setuptools=47.1.1=py38_0PyMySQL
 six=1.15.0=py_0
 soupsieve=2.0.1=py_0
 sqlite=3.31.1=h62c20be_1
