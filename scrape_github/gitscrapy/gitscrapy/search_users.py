@@ -45,10 +45,21 @@ def user_info(repos, g):
     with Bar('Extract_user_info', max=len(repos)) as bar:
         for i, repo in enumerate(repos):
             user = repo.split('/')[0]
-            user_info = extract_profile(user, g, new_users)
-            
-            info.append(user_info)
+            print('\n',i, user)
+
+            url = 'https://api.github.com/users/' + user
+            user = requests.get(url).json()
+
+            # Exclude origanization
+            if user['type'] == 'User':
+                user_info = extract_profile(user, g, new_users)     
+                info.append(user_info)
+            else:
+                print('pass')
+                pass
             bar.next()
+
+    pickle.dump(info, open("owner_info", 'wb'))
 
     # get unique users
     new_users = list(set(new_users))
@@ -115,24 +126,22 @@ def merge_df(contributions, exceptions, df):
 
 if __name__=='__main__':
 
-    #token = dp.Variable.get(name='github_token')
-    #token = token.value
-    #g = Github(token)
+    token = dp.Variable.get(name='github_token')
+    token = token.value
+    g = Github(token)
+    repos = find_repo_list()
+    profile_df = user_info(repos, g)
+    #profile_df = pickle.load(open('profile_df', 'rb'))
+    pickle.dump(profile_df, open("profile_df", 'wb'))
 
-    #repos = find_repo_list()
+    #print(profile_df.info())
 
-    #profile_df = user_info(repos, g)
+    #contributions, exceptions = contributions_info(profile_df)
 
-    profile_df = pickle.load(open('profile_df', 'rb'))
-
-    print(profile_df.info())
-
-    contributions, exceptions = contributions_info(profile_df)
-
-    new_df = merge_df(contributions, exceptions, profile_df)
+    #new_df = merge_df(contributions, exceptions, profile_df)
 
     # Save the df and new_users 
-    pickle.dump(new_df, open("profile_df", 'wb'))
+    #pickle.dump(new_df, open("profile_df_extension", 'wb'))
 
 
 
