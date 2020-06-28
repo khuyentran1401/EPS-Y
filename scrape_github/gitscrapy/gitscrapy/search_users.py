@@ -48,6 +48,7 @@ def user_info(repos, g):
             print('\n',i, user)
 
             url = 'https://api.github.com/users/' + user
+            print('url')
             user = requests.get(url).json()
 
             # Exclude origanization
