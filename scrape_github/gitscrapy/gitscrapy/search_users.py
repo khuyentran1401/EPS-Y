@@ -121,7 +121,9 @@ def merge_df(contributions, exceptions, df):
     # Remove the users without the contributions
     df = df[~df.index.isin(exclude_ind)]
 
-    df = df.reset_index().drop('index', axis=1, inplace=True)
+
+    df.reset_index(inplace=True)
+    df = df.drop('index', axis=1)
 
     df['contribution'] = contributions 
 
@@ -144,10 +146,13 @@ if __name__=='__main__':
     #print(profile_df.info())
 
     profile_df = pickle.load(open('profile_df', 'rb'))
-    contributions, exceptions = contributions_info(profile_df, token)
+    #contributions, exceptions = contributions_info(profile_df, token)
 
-    pickle.dump(contributions, open("contributions", 'wb'))
-    pickle.dump(exceptions, open("exceptions", 'wb'))
+    #pickle.dump(contributions, open("contributions", 'wb'))
+    #pickle.dump(exceptions, open("exceptions", 'wb'))
+
+    contributions = pickle.load(open("contributions", 'rb'))
+    exceptions = pickle.load(open("exceptions", 'rb'))
 
     new_df = merge_df(contributions, exceptions, profile_df)
 
