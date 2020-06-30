@@ -6,12 +6,8 @@ from fp.fp import FreeProxy
 import urllib
 import time
 import random as rand
-import scrapy
-
-
-
-class MyOpener(urllib.request.FancyURLopener):
-    version = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36'
+from pymongo import MongoClient
+from scrape_googlescholar.utils import *
 
 
 
@@ -21,36 +17,38 @@ class UserScrapp(object):
     Scrapp by:
         -Profile
     '''
-    def __init__(self, url, type='profile'):
+    def __init__(self, url, type='profile', to_db = False, name_db = 'ScholarDB', ip_db = 'localhost',  port_db=27017, max_time=1000):
         '''
         Initialization function for the Scholar Scrapping class
         Input:
             url -> the Google Scholar url to scrapp
             type -> the type of link we have
+            to_db -> If true, with explore, the data will be stored in the DB
+            name_db -> The name of the database that we want to use
+            ip_db -> The ip of the database
+            port_db -> The port of the database
+            max_time -> Max time for each request
         '''
         self.url = url
         try:
-            print(scrapy.Request(url=self.url).body)
-            self.html = BeautifulSoup(urlopen(self.url).read(), features='html.parser')
-            time.sleep(rand.randint(1, 10))
-        except HTTPError as e:
-            if e.code == 429:
-                time.sleep(rand.randint(1, 10))
-                print("Proxy needed")
-                #try:
-                #proxy =  FreeProxy(country_id=['US', 'BR'], timeout=0.3, rand=True).get()
-                req = request.Request(self.url)
-                req.add_header('User', 'Bot 1')
-                self.html = BeautifulSoup(urlopen(req).read(), features='html.parser')
-                #self.html = BeautifulSoup(urlopen(self.url).read(), features='html.parser')
-                #except:
-                #    print("Error with proxy")
-                #    raise Exception("Cannot connect to the url: " + url)
-            else:
-                raise Exception("Cannot connect to the url: " + url)
+            self.html = BeautifulSoup(connection(self.url, 0, max_time, time.time()).read(), features='html.parser')
+        except:
+            self.html = None
+            print("Cannot connect to the url: " + url)
         self.type = 'profile'
         self.info = {'google_user_id':self.url.split('&')[0].split('?')[1].split('=')[1]}
         #maybe we should asign some id to link the people form the working network
+
+        #connection to the database
+        if to_db:
+            self.connection = MongoClient(ip_db, port_db)
+            self.db = self.connection[name_db]
+            self.scholar = self.db.scholar
+        else:
+            self.connection = None
+            self.db = None
+            self.scholar = None
+
 
     def get_basic_profile_info(self):
         '''
@@ -62,7 +60,10 @@ class UserScrapp(object):
         self.info['profile'] = {}
         for i in prof:
             if cont == 2:
-                self.info['profile'][labels[cont]] = i.a['href']
+                try:
+                    self.info['profile'][labels[cont]] = i.a['href']
+                except:
+                    print("No personal web found")
                 cont += 1
                 continue
             if cont == 3:
@@ -104,7 +105,7 @@ class UserScrapp(object):
                 self.info['citation'][name][headers[cont]] = j.get_text()
                 cont += 1
 
-    def get_colaborators(self):
+    def colaborators(self):
         '''
         Funtion to get the colaborators of a person
         ########A modification of this function may be used to crate an exploration tree
@@ -112,8 +113,11 @@ class UserScrapp(object):
         '''
         colab = self.html.find(id='gsc_rsb_co')
         self.info['colab'] = []
-        for i in colab.ul:
-            self.info['colab'].append(i.a['href'].split('&')[0].split('?')[1].split('=')[1])
+        try:
+            for i in colab.ul:
+                self.info['colab'].append(i.a['href'].split('&')[0].split('?')[1].split('=')[1])
+        except:
+            print("No colaborators found")
 
     def get_papers_names(self):
         '''
@@ -148,6 +152,47 @@ class UserScrapp(object):
                 aux[headers[cont]] = j.get_text()
                 cont += 1
             self.info['papers'].append(aux)
+
+    def get_colaborators(self):
+        '''
+        Returns the colaborators of the current person.
+        '''
+        ret = []
+        for colab in self.info['colab']:
+            aux = {}
+            aux['link'] = 'https://scholar.google.com/citations?user=' + colab + '&hl=en&oi=sra'
+            aux['id'] = colab
+            ret += [aux]
+        return ret
+
+
+    def get_id(self):
+        '''
+        Returns the id of the researcher
+        '''
+        return self.info['google_user_id']
+
+    def explore(self):
+        '''
+        This function extracts all the information from the users. 
+        '''
+        if self.html:
+            self.get_basic_profile_info()
+            self.get_cites_stats()
+            self.colaborators()
+            self.get_papers_names()
+            if self.scholar:
+                self.scholar.insert_one(self.info)
+            return True
+        print("Not able to read HTML file")
+        return False
+
+
+
+
+
+
+
 
 
 class PaperScrapp(object):
@@ -213,7 +258,7 @@ class PaperScrapp(object):
 
         for i in self.papers:
             try:
-                page = BeautifulSoup(urlopen(base_url+i).read(), features='html.parser')
+                page = BeautifulSoup(connection(base_url+i).read(), features='html.parser')
                 title = page.find(id='gsc_vcd_title').a.get_text()
                 if title in self.cur_papers_names:
                     continue
@@ -226,3 +271,8 @@ class PaperScrapp(object):
                     f.close()
             except:
                 not_explored.append(i)
+
+
+
+
+
