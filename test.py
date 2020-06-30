@@ -2,7 +2,8 @@ from scrape_googlescholar.scrapp_scholar import UserScrapp, PaperScrapp
 from graph_algorithms.explore import Graph_explore
 from scrape_googlescholar.utils import *
 from scrape_kaggle.scrape import *
-
+import json
+import pickle
 
 '''test = UserScrapp("https://scholar.google.com/citations?user=Vs-MdPcAAAAJ&hl=en&oi=sra")
 test.get_cites_stats()
@@ -24,7 +25,12 @@ print(test.info)'''
 a.get_json()'''
 
 a = Scrape_Kaggles('https://www.kaggle.com/wowfattie')
-a.get_json()
+res = a.get_json()
+
+print(res)
 
 '''a = Scrape_Kaggles('https://www.kaggle.com/kazanova')
 a.get_json()'''
+
+
+

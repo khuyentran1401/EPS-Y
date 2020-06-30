@@ -5,6 +5,9 @@ from bs4 import BeautifulSoup
 from urllib.request import urlopen
 from scrape_googlescholar.utils import * 
 from scrape_kaggle.utils import *
+import re
+import json
+
 
 class Scrape_Kaggles(object):
 	"""
@@ -40,14 +43,16 @@ class Scrape_Kaggles(object):
 		if self.html == None:
 			print('No file found')
 			return -1
-		aux = str(self.html).split(';')
 		information = []
+		aux = str(self.html).split(';')
 		for i in aux:
 			if "Kaggle.State.push" in i:
 				information.append(i)
 
 		#try to get json, but I get an encoding error
+		res = information[1][18:-1]
+		regex = re.compile(r'\\(?![/u"])')
+		fixed = regex.sub(r"\\\\", res)
 
-		print(information[1])
-		print(string2dic(information[1][18:][:-1]))
-		print(len(information))
+		return json.loads(fixed)
+
