@@ -20,11 +20,11 @@ print(test.info)'''
 #t = EmailFind('Sammy Bengio Google', 'linkedin').search_email()
 
 
-a = Scrape_Kaggles('https://www.kaggle.com/bestfitting')
+'''a = Scrape_Kaggles('https://www.kaggle.com/bestfitting')
+a.get_json()'''
+
+a = Scrape_Kaggles('https://www.kaggle.com/wowfattie')
 a.get_json()
 
-'''a = Scrape_Kaggles('https://www.kaggle.com/wowfattie')
-a.get_json()
-
-a = Scrape_Kaggles('https://www.kaggle.com/kazanova')
+'''a = Scrape_Kaggles('https://www.kaggle.com/kazanova')
 a.get_json()'''
