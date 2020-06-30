@@ -37,7 +37,7 @@ def find_repo_list():
     return repos
 
 
-def user_info(repos, g):
+def user_info(repos, username, token):
     '''Get information about the repo and find contributors'''
     info = []
     new_users = []
@@ -48,12 +48,11 @@ def user_info(repos, g):
             print('\n',i, user)
 
             url = 'https://api.github.com/users/' + user
-            print('url')
-            user = requests.get(url).json()
+            user = requests.get(url, auth=(username, token)).json()
 
             # Exclude origanization
-            if user['type'] == 'User':
-                user_info = extract_profile(user, g, new_users)     
+            if user['type'] == 'User' and user['public_repos'] <= 1000:
+                user_info = extract_profile(user, new_users, username, token)     
                 info.append(user_info)
             else:
                 print('pass')
@@ -64,11 +63,18 @@ def user_info(repos, g):
 
     # get unique users
     new_users = list(set(new_users))
+    pickle.dump(new_users, open("new_users", 'wb'))
 
     with Bar('Extract_contributor_info', max=len(new_users)) as bar:
-        for user in new_users:
-            contributor_info = extract_profile(user, g, new_users, contributor=True)
-            info.append(contributor_info)
+        for user in new_users: 
+            
+            url = 'https://api.github.com/users/' + user
+            user = requests.get(url, auth=(username, token)).json()
+
+            if user['type'] == 'User' and user['public_repos'] <= 1000:
+
+                contributor_info = extract_profile(user, new_users, username, token, contributor=True)
+                info.append(contributor_info)
 
             bar.next()
 
@@ -81,7 +87,7 @@ def user_info(repos, g):
 
     return repo_df 
 
-def contributions_info(df):
+def contributions_info(df, token):
 
     urls = list(df.html_url)
 
@@ -94,7 +100,7 @@ def contributions_info(df):
         for url in urls:
             time.sleep(5)
             try:
-                contribution = extract_contributions(url)
+                contribution = extract_contributions(url, token)
                 contributions.append(contribution)
             except:
                 exceptions.append(url)
@@ -129,20 +135,26 @@ if __name__=='__main__':
 
     token = dp.Variable.get(name='github_token')
     token = token.value
+    username = 'khuyentran1401'
     g = Github(token)
-    repos = find_repo_list()
-    profile_df = user_info(repos, g)
-    #profile_df = pickle.load(open('profile_df', 'rb'))
-    pickle.dump(profile_df, open("profile_df", 'wb'))
+    #repos = find_repo_list()
+    #profile_df = user_info(repos, username, token)
+    #pickle.dump(profile_df, open("profile_df", 'wb'))
 
     #print(profile_df.info())
 
-    #contributions, exceptions = contributions_info(profile_df)
+    profile_df = pickle.load(open('profile_df', 'rb'))
+    contributions, exceptions = contributions_info(profile_df, token)
 
-    #new_df = merge_df(contributions, exceptions, profile_df)
+    pickle.dump(contributions, open("contributions", 'wb'))
+    pickle.dump(exceptions, open("exceptions", 'wb'))
+
+    new_df = merge_df(contributions, exceptions, profile_df)
+
+   
 
     # Save the df and new_users 
-    #pickle.dump(new_df, open("profile_df_extension", 'wb'))
+    pickle.dump(new_df, open("profile_df_extension", 'wb'))
 
 
 

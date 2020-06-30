@@ -42,7 +42,7 @@ def find_top_repos(n, repos):
     return top_repos
 
 
-def get_repo(user_name, repo, g, new_users, contributor):
+def get_repo(user_name, repo, new_users, contributor, username, token):
 
 
     # repository full name
@@ -63,16 +63,20 @@ def get_repo(user_name, repo, g, new_users, contributor):
     # readme = repo.get_readme().decoded_content
     #  contributors
     if not contributor:
-        contributors_url = repo['contributors_url']
-        contributors = requests.get(contributors_url).json()
-        contributors = [contributor['login'] for contributor in contributors if contributor['login'] != user_name]
-        new_users += contributors
-        new_users = list(set(new_users))
+        try:
+            contributors_url = repo['contributors_url']
+            contributors = requests.get(
+                contributors_url, auth=(username, token)).json()
+            contributors = [contributor['login'] for contributor in contributors if contributor['login'] != user_name]
+            new_users += contributors
+            new_users = list(set(new_users))
+        except:
+            pass
 
     return [description, updated_at, language, forks, num_stars]
 
 
-def find_repo_info(user_name, repos, g, new_users, contributor):
+def find_repo_info(user_name, repos, new_users, contributor, username, token):
 
     if len(repos) == 0:
         return None, None, None, None, None, None
@@ -86,7 +90,7 @@ def find_repo_info(user_name, repos, g, new_users, contributor):
 
     with Bar('Extract_repo', max=len(repos)) as bar:
         for repo in repos:
-            repo_info = get_repo(user_name, repo, g, new_users, contributor)
+            repo_info = get_repo(user_name, repo, new_users, contributor, username, token)
             descriptions.append(repo_info[0])
             dates.append(repo_info[1])
             languages.append(repo_info[2])
@@ -101,7 +105,7 @@ def find_repo_info(user_name, repos, g, new_users, contributor):
     return total_stars, forks, languages, descriptions, dates, max_star
 
 
-def extract_profile(user, g,  new_users, contributor=False, n=5):
+def extract_profile(user, new_users, username, token, contributor=False, n=5):
 
 
     # Contributor or Owner
@@ -124,20 +128,23 @@ def extract_profile(user, g,  new_users, contributor=False, n=5):
     updated_at = user['updated_at']
 
     i = 1
+    repos = []
     while True:
-        repos_url = user['repos_url'] + '?page=' + str(i) 
-        repos = requests.get(repos_url).json()
+        repos_url = user['repos_url'] + '?page=' + str(i)
+        print('repos_url', i, repos_url) 
+        repos_i = requests.get(repos_url , auth=(username, token)).json()
 
-        if len(repos) == 0:
+        if len(repos_i) == 0:
             break
         
         else:
-            repos = [repo for repo in repos if repo['fork'] == False]
+            print(len([repo for repo in repos_i if repo['fork'] == False]))
+            repos += [repo for repo in repos_i if repo['fork'] == False]
             i += 1
     # top_repos = find_top_repos(n, repos)
 
     total_stars, forks, languages, descriptions, dates, max_star= find_repo_info(
-        user_name, repos, g, new_users, contributor)
+        user_name, repos, new_users, contributor, username, token)
 
     return [user_name, name, type_user, html_url, bio, company, email, followers,
             following, hireable, location, created_at, updated_at, total_stars, max_star,
@@ -145,7 +152,7 @@ def extract_profile(user, g,  new_users, contributor=False, n=5):
             ]
 
 
-def extract_contributions(url):
+def extract_contributions(url, token):
 
     headers= {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) '
                'AppleWebKit/537.11 (KHTML, like Gecko) '
@@ -154,7 +161,8 @@ def extract_contributions(url):
                'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
                'Accept-Encoding': 'none',
                'Accept-Language': 'en-US,en;q=0.8',
-               'Connection': 'keep-alive'}
+               'Connection': 'keep-alive',
+               'Authorization': 'token %s' % token}
 
     req= urllib.request.Request(url=url, headers=headers)
     source= urllib.request.urlopen(req).read()
@@ -162,6 +170,8 @@ def extract_contributions(url):
     soup= BeautifulSoup(source, 'lxml')
 
     contribution= soup.find_all('h2', class_='f4 text-normal mb-2')[0].text
+
+    print(int(re.findall('\d+', contribution)[0]))
 
     return int(re.findall('\d+', contribution)[0])
 
