@@ -30,7 +30,7 @@ def connection(url, level = 0, max_time = 1000, init_time = None):
            'Connection': 'keep-alive'}
         req = urllib.request.Request(url, headers=headers)
         r = urllib.request.urlopen(req)
-        time.sleep(5)
+        time.sleep(1)
     except:
         print("Error found, wait to the next request")
         time.sleep(5)

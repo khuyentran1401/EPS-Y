@@ -22,6 +22,9 @@ from bs4 import BeautifulSoup
 import urllib.request
 
 
+
+
+
 def find_repo_list():    
     ''' Find urls and repo's names to extract '''
 
@@ -39,6 +42,7 @@ def find_repo_list():
 
 def user_info(repos, username, token):
     '''Get information about the repo and find contributors'''
+    
     info = []
     new_users = []
 
