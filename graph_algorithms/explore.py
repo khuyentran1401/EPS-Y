@@ -81,6 +81,7 @@ class Graph_explore(object):
             visited = set()
         failed = []
         while len(queue) > 0 and len(visited) < self.max_scrap:
+            print("Current queue len: " + str(len(queue)))
             cur_node = queue.pop(0)
             print("------------")
             print(cur_node)
@@ -89,7 +90,12 @@ class Graph_explore(object):
                 continue
             visited.add(cur_node[0]['id'])
             cur = self.scraper(cur_node[0]['link'], to_db = self.to_db, name_db = self.name_db, ip_db = self.ip_db,  port_db=self.port_db, max_time=self.max_time)
-            ans = cur.explore()
+            try:
+                ans = cur.explore()
+            except:
+                failed.append(cur_node)
+                print("Fatal error, exploring next node")
+                continue
             if ans == False:
                 print("Saving link for later because of connection failure")
                 failed.append(cur_node)

@@ -14,11 +14,11 @@ class FindUser(scrapy.Spider):
     allowed_domains = ["github.com"]
 
     start_urls = [
-        'https://github.com/search?p=1&q=machine+learning&type=Users']
+        'https://github.com/search?q=machine+learning&type=Repositories']
 
     def parse(self, response):
         #repo_urls = response.xpath('// li[@class="repo-list-item hx_hit-repo d-flex flex-justify-start py-4 public source"]/div[2]/div/a/@href').getall()
-        repo_urls = response.xpath('// a[@class="mr-1"]/@href').getall()
+        repo_urls = response.xpath('//a[@class="v-align-middle"]/@href').getall()
         for i, url in enumerate(repo_urls):
             #url = url.split("/")[1]
             repo_urls[i] = 'https://github.com' + url

@@ -22,11 +22,17 @@ class UserScrapp(object):
         Initialization function for the Scholar Scrapping class
         Input:
             url -> the Google Scholar url to scrapp
+
             type -> the type of link we have
+
             to_db -> If true, with explore, the data will be stored in the DB
+
             name_db -> The name of the database that we want to use
+
             ip_db -> The ip of the database
+
             port_db -> The port of the database
+            
             max_time -> Max time for each request
         '''
         self.url = url
@@ -72,7 +78,10 @@ class UserScrapp(object):
                     self.info['profile'][labels[cont]].append(j.get_text())
                 cont += 1
                 continue
-            self.info['profile'][labels[cont]] = i.get_text()
+            try:
+                self.info['profile'][labels[cont]] = i.get_text()
+            except:
+                print("Error in profle info")
             cont += 1
 
 
