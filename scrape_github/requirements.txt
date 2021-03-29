@@ -91,7 +91,7 @@ pycodestyle==2.6.0
 pycparser==2.20
 PyDispatcher==2.0.5
 PyGithub==1.51
-Pygments==2.6.1
+Pygments==2.7.4
 PyHamcrest==2.0.2
 PyJWT==1.7.1
 pyOpenSSL==19.1.0
