@@ -130,7 +130,7 @@ tqdm==4.46.1
 traitlets==4.3.3
 Twisted==20.3.0
 typing-extensions==3.7.4.2
-urllib3==1.25.8
+urllib3==1.26.5
 validators==0.15.0
 vega-datasets==0.8.0
 w3lib==1.22.0
